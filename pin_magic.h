@@ -261,7 +261,7 @@
 
  #ifdef USE_ADAFRUIT_SHIELD_PINOUT
 
-  #define RD_PORT PIOA				/*pin A0 */	
+  #define RD_PORT PIOA				/*pin A0 */
   #define WR_PORT PIOA				/*pin A1 */
   #define CD_PORT PIOA				/*pin A2 */
   #define CS_PORT PIOA				/*pin A3 */
@@ -279,7 +279,7 @@
    PIO_Clear(PIOB, (((~d) & 0x20)<<(27-5))); \
    WR_STROBE; }
 
-  #define read8inline(result) { \    
+  #define read8inline(result) { \
    RD_ACTIVE;   \
    delayMicroseconds(1);      \
    result = (((PIOC->PIO_PDSR & (1<<23)) >> (23-7)) | ((PIOC->PIO_PDSR & (1<<24)) >> (24-6)) | \

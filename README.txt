@@ -1,8 +1,16 @@
-This is a library for the Adafruit 2.8" TFT display.
-This library works with the Adafruit 2.8" TFT Breakout w/SD card
-  ----> http://www.adafruit.com/products/335
-as well as Adafruit TFT Touch Shield
-  ----> http://www.adafruit.com/products/376
+Mcufriend module
+ili9341(2.4inch 240x320)
+s6d0154(2.8inch 240x320)
+ili9327(3.6inch 240x400) 
+ili9488(3.95inch 480x320)
+
+Adafruit_TFTLCD.cpp 
+You set a value of #define of TFTHEIGHT and TFTWEIGHT appropriately.
+
+------------------------------------------------------------------------------
+This is a library for the Adafruit 2.4" (IDF=0x154) TFT display.
+This library works with the Adafruit 2.4" (IDF=0x154) TFT Breakout w/SD card
+  ----> www.mcufriend.com
  
 Check out the links above for our tutorials and wiring diagrams.
 These displays use 8-bit parallel to communicate, 12 or 13 pins are required

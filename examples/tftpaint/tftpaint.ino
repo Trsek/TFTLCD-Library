@@ -44,10 +44,10 @@
 //   D6 connects to digital pin 39
 //   D7 connects to digital pin 40
 
-#define YP A3  // must be an analog pin, use "An" notation!
+#define YP A1  // must be an analog pin, use "An" notation!
 #define XM A2  // must be an analog pin, use "An" notation!
-#define YM 9   // can be a digital pin
-#define XP 8   // can be a digital pin
+#define YM 7   // can be a digital pin
+#define XP 6   // can be a digital pin
 
 #define TS_MINX 150
 #define TS_MINY 120
@@ -93,6 +93,8 @@ void setup(void) {
 
   if(identifier == 0x9325) {
     Serial.println(F("Found ILI9325 LCD driver"));
+  } else if(identifier == 0x9327) {
+    Serial.println(F("Found ILI9327 LCD driver"));
   } else if(identifier == 0x9328) {
     Serial.println(F("Found ILI9328 LCD driver"));
   } else if(identifier == 0x7575) {
@@ -101,10 +103,14 @@ void setup(void) {
     Serial.println(F("Found ILI9341 LCD driver"));
   } else if(identifier == 0x8357) {
     Serial.println(F("Found HX8357D LCD driver"));
+  } else if(identifier == 0x0154) {
+    Serial.println(F("Found S6D0154 LCD driver"));
+  } else if(identifier == 0x9488) {
+    Serial.println(F("Found ILI9488 LCD driver"));
   } else {
     Serial.print(F("Unknown LCD driver chip: "));
     Serial.println(identifier, HEX);
-    Serial.println(F("If using the Adafruit 2.8\" TFT Arduino shield, the line:"));
+    Serial.println(F("If using the Adafruit 2.4\" TFT Arduino shield, the line:"));
     Serial.println(F("  #define USE_ADAFRUIT_SHIELD_PINOUT"));
     Serial.println(F("should appear in the library header (Adafruit_TFT.h)."));
     Serial.println(F("If using the breakout board, it should NOT be #defined!"));

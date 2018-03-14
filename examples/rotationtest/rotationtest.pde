@@ -48,9 +48,9 @@ void setup(void) {
   Serial.println(F("TFT LCD test"));
 
 #ifdef USE_ADAFRUIT_SHIELD_PINOUT
-  Serial.println(F("Using Adafruit 2.8\" TFT Arduino Shield Pinout"));
+  Serial.println(F("Using Adafruit 2.4\" TFT Arduino Shield Pinout"));
 #else
-  Serial.println(F("Using Adafruit 2.8\" TFT Breakout Board Pinout"));
+  Serial.println(F("Using Adafruit 2.4\" TFT Breakout Board Pinout"));
 #endif
 
   tft.reset();
@@ -59,6 +59,8 @@ void setup(void) {
 
   if(identifier == 0x9325) {
     Serial.println(F("Found ILI9325 LCD driver"));
+  } else if(identifier == 0x9327) {
+    Serial.println(F("Found ILI9327 LCD driver"));
   } else if(identifier == 0x9328) {
     Serial.println(F("Found ILI9328 LCD driver"));
   } else if(identifier == 0x7575) {
@@ -67,10 +69,14 @@ void setup(void) {
     Serial.println(F("Found ILI9341 LCD driver"));
   } else if(identifier == 0x8357) {
     Serial.println(F("Found HX8357D LCD driver"));
+  } else if(identifier == 0x0154) {
+    Serial.println(F("Found S6D0154 LCD driver"));
+  } else if(identifier == 0x9488) {
+    Serial.println(F("Found ILI9488 LCD driver"));
   } else {
     Serial.print(F("Unknown LCD driver chip: "));
     Serial.println(identifier, HEX);
-    Serial.println(F("If using the Adafruit 2.8\" TFT Arduino shield, the line:"));
+    Serial.println(F("If using the Adafruit 2.4\" TFT Arduino shield, the line:"));
     Serial.println(F("  #define USE_ADAFRUIT_SHIELD_PINOUT"));
     Serial.println(F("should appear in the library header (Adafruit_TFT.h)."));
     Serial.println(F("If using the breakout board, it should NOT be #defined!"));
@@ -88,6 +94,7 @@ void setup(void) {
 }
 
 void loop(void) {
+  rotateText();
   rotatePixel();
   rotateLine();
   rotateFastline();
@@ -106,10 +113,10 @@ void rotateText() {
     tft.setCursor(0, 30);
     tft.setTextColor(RED);
     tft.setTextSize(1);
-    tft.println("Hello World!");
+    tft.println("See serial monitor");
     tft.setTextColor(YELLOW);
     tft.setTextSize(2);
-    tft.println("Hello World!");
+    tft.println("for instructions");
     tft.setTextColor(GREEN);
     tft.setTextSize(3);
     tft.println("Hello World!");

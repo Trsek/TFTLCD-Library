@@ -57,7 +57,7 @@ Adafruit_TFTLCD tft;
 
 #define BOXSIZE   40
 #define PENRADIUS  4
-int oldcolor, currentcolor;
+unsigned int oldcolor, currentcolor;
 
 void setup(void) {
   Serial.begin(9600);

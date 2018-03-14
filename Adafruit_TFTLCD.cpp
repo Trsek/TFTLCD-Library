@@ -18,17 +18,17 @@
 #include "Adafruit_TFTLCD.h"
 #include "pin_magic.h"
 
-//#define TFTWIDTH   320
-//#define TFTHEIGHT  480
-
 #define TFTWIDTH   240
 #define TFTHEIGHT  320
 
 // LCD controller chip identifiers
-#define ID_932X    0
-#define ID_7575    1
-#define ID_9341    2
-#define ID_HX8357D    3
+#define ID_932X      0
+#define ID_7575      1
+#define ID_9341      2
+#define ID_HX8357D   3
+#define ID_S6D0154   4
+#define ID_ILI9327   5
+#define ID_ILI9488   6
 #define ID_UNKNOWN 0xFF
 
 #include "registers.h"
@@ -248,6 +248,72 @@ static const uint16_t ILI932x_regValues[] PROGMEM = {
   ILI932X_DISP_CTRL1       , 0x0133, // Main screen turn on
 };
 
+static const uint8_t ILI9341_regValues[] PROGMEM = {
+	HX8357_SWRESET, 0,
+	0xCB, 5, 0x39, 0x2C, 0x00, 0x34, 0x02,
+	0xCF, 3, 0x00, 0xC1, 0x30,
+	0xE8, 3, 0x85, 0x00, 0x78,
+	0xEA, 2, 0x00, 0x00,
+	0xED, 4, 0x64, 0x03, 0x12, 0x81,
+	0xF7, 1, 0x20,
+	0xC0, 1, 0x23,
+	0xC1, 1, 0x10,
+	0xC5, 2, 0x3E, 0x28,
+	0xC7, 1, 0x86,
+	0x36, 1, 0x48,
+	0x3A, 1, 0x55,
+	0xB1, 2, 0x00, 0x18,
+	0xB6, 3, 0x08, 0x82, 0x27,
+	0xF2, 1, 0x00,
+	0x26, 1, 0x01,
+	0xE0,15, 0x0f,0x31,0x2b,0x0c,0x0e,0x08,0x4e,0xf1,0x37,0x07,0x10,0x03,0x0e,0x09,0x00,
+	0xE1,15, 0x00,0x0e,0x14,0x03,0x11,0x07,0x31,0xC1,0x48,0x08,0x0f,0x0c,0x31,0x36,0x0f,
+	0x11, 0,
+	TFTLCD_DELAY, 150,
+	0x29, 0,
+	0x2C, 0,
+};
+
+static const uint8_t ILI9327_regValues[] PROGMEM = {
+	HX8357_SWRESET, 0,
+	0xE9, 1, 0x20,
+	0x11, 0,
+	TFTLCD_DELAY, 100,
+	0xD1, 3, 0x00, 0x71, 0x19,
+	0xD0, 3, 0x07, 0x01, 0x08,
+	0x36, 1, 0x48,
+	0x3A, 1, 0x05,
+	0xC1, 4, 0x10, 0x10, 0x02, 0x02,
+	0xC0, 6, 0x00, 0x31, 0x00, 0x00, 0x01, 0x02,
+	0xC5, 1, 0x04,
+	0xD2, 2, 0x01, 0x44,
+	0xC8,15, 0x04, 0x67, 0x35, 0x04, 0x08, 0x06, 0x24, 0x01, 0x37, 0x40, 0x03, 0x10, 0x08, 0x80, 0x00,
+	0x2A, 4, 0x00, 0x00, 0x00, 0xEF,
+	0x2B, 5, 0x00, 0x00, 0x01, 0x3F, 0x8F,
+	0x29, 0,
+	0x2C, 0,
+	
+};
+
+static const uint8_t ILI9488_regValues[] PROGMEM = {
+	HX8357_SWRESET, 0,
+	0xE0, 15, 0x00, 0x07, 0x10, 0x09, 0x17, 0x0B, 0x40, 0x8A, 0x4B, 0x0A, 0x0D, 0x0F, 0x15, 0x16, 0x0F,
+	0xE1, 15, 0x00, 0x1A, 0x1B, 0x02, 0x0D, 0x05, 0x30, 0x35, 0x43, 0x02, 0x0A, 0x09, 0x32, 0x36, 0x0F,
+	0xB1,  1, 0xA0,
+	0xB4,  1, 0x02,
+	0xC0,  2, 0x17, 0x15,
+	0xC1,  1, 0x41,
+	0xC5,  3, 0x00, 0x0A, 0x80,
+	0xB6,  1, 0x02,
+	0x36,  1, 0x48,
+	0x3A,  1, 0x55,
+	0xE9,  1, 0x00,
+	0xF7,  4, 0xA9 ,0x51, 0x2C, 0x82,
+	0x11,  0,
+	TFTLCD_DELAY, 120,
+	0x29,  0,
+};
+
 void Adafruit_TFTLCD::begin(uint16_t id) {
   uint8_t i = 0;
 
@@ -271,29 +337,31 @@ void Adafruit_TFTLCD::begin(uint16_t id) {
 
   } else if (id == 0x9341) {
 
-    uint16_t a, d;
-    driver = ID_9341;
-    CS_ACTIVE;
-    writeRegister8(ILI9341_SOFTRESET, 0);
-    delay(50);
-    writeRegister8(ILI9341_DISPLAYOFF, 0);
+	// ILI9341 mcufriend
+	driver = ID_9341;
+	CS_ACTIVE;
+	while(i < sizeof(ILI9341_regValues)) {
+		uint8_t r = pgm_read_byte(&ILI9341_regValues[i++]);
+		uint8_t len = pgm_read_byte(&ILI9341_regValues[i++]);
+		if(r == TFTLCD_DELAY) {
+			delay(len);
+			} else {
+			//Serial.print("Register $"); Serial.print(r, HEX);
+			//Serial.print(" datalen "); Serial.println(len);
 
-    writeRegister8(ILI9341_POWERCONTROL1, 0x23);
-    writeRegister8(ILI9341_POWERCONTROL2, 0x10);
-    writeRegister16(ILI9341_VCOMCONTROL1, 0x2B2B);
-    writeRegister8(ILI9341_VCOMCONTROL2, 0xC0);
-    writeRegister8(ILI9341_MEMCONTROL, ILI9341_MADCTL_MY | ILI9341_MADCTL_BGR);
-    writeRegister8(ILI9341_PIXELFORMAT, 0x55);
-    writeRegister16(ILI9341_FRAMECONTROL, 0x001B);
-    
-    writeRegister8(ILI9341_ENTRYMODE, 0x07);
-    /* writeRegister32(ILI9341_DISPLAYFUNC, 0x0A822700);*/
+			CS_ACTIVE;
+			CD_COMMAND;
+			write8(r);
+			CD_DATA;
+			for (uint8_t d=0; d<len; d++) {
+				uint8_t x = pgm_read_byte(&ILI9341_regValues[i++]);
+				write8(x);
+			    }
+			CS_IDLE;
 
-    writeRegister8(ILI9341_SLEEPOUT, 0);
-    delay(150);
-    writeRegister8(ILI9341_DISPLAYON, 0);
-    delay(500);
-    setAddrWindow(0, 0, TFTWIDTH-1, TFTHEIGHT-1);
+		    }
+	    }
+		
     return;
 
   } else if (id == 0x8357) {
@@ -337,6 +405,96 @@ void Adafruit_TFTLCD::begin(uint16_t id) {
     setRotation(rotation);
     setLR(); // Lower-right corner of address window
 
+  } else if(id == 0x0154){
+  //S6D0154
+   driver = ID_S6D0154;
+   CS_ACTIVE;
+   writeRegister16(0x11,0x001A);
+   writeRegister16(0x12,0x3121);
+   writeRegister16(0x13,0x006C);
+   writeRegister16(0x14,0x4249);
+
+   writeRegister16(0x10,0x0800);
+   delay(10);
+   writeRegister16(0x11,0x011A);
+   delay(10);
+   writeRegister16(0x11,0x031A);
+   delay(10);
+   writeRegister16(0x11,0x071A);
+   delay(10);
+   writeRegister16(0x11,0x0F1A);
+   delay(20);
+   writeRegister16(0x11,0x0F3A);
+   delay(30);
+
+   writeRegister16(0x01,0x0128);
+   writeRegister16(0x02,0x0100);
+   writeRegister16(0x03,0x1030);
+   writeRegister16(0x07,0x1012);
+   writeRegister16(0x08,0x0303);
+   writeRegister16(0x0B,0x1100);
+   writeRegister16(0x0C,0x0000);
+   writeRegister16(0x0F,0x1801);
+   writeRegister16(0x15,0x0020);
+
+   writeRegister16(0x07,0x0012);
+   delay(40);
+
+   writeRegister16(0x07,0x0013);/*  GRAM Address Set */
+   writeRegister16(0x07,0x0017);/*  Display Control  DISPLAY ON */
+   
+   setAddrWindow(0, 0, TFTWIDTH-1, TFTHEIGHT-1);
+   
+  } else if (id == 0x9327){
+	// ILI9327 8 bit parallel interface
+	driver = ID_ILI9327;
+	CS_ACTIVE;
+	while(i < sizeof(ILI9327_regValues)) {
+		uint8_t r = pgm_read_byte(&ILI9327_regValues[i++]);
+		uint8_t len = pgm_read_byte(&ILI9327_regValues[i++]);
+		if(r == TFTLCD_DELAY) {
+			delay(len);
+			} else {
+
+			CS_ACTIVE;
+			CD_COMMAND;
+			write8(r);
+			CD_DATA;
+			for (uint8_t d=0; d<len; d++) {
+				uint8_t x = pgm_read_byte(&ILI9327_regValues[i++]);
+				write8(x);
+			}
+			CS_IDLE;
+
+		}
+	}
+    return;
+	
+  } else if (id == 0x9488){
+	// ILI9488 8 bit parallel interface 
+	driver = ID_ILI9488;
+	CS_ACTIVE;
+	  	while(i < sizeof(ILI9488_regValues)) {
+		  	uint8_t r = pgm_read_byte(&ILI9488_regValues[i++]);
+		  	uint8_t len = pgm_read_byte(&ILI9488_regValues[i++]);
+		  	if(r == TFTLCD_DELAY) {
+			  	delay(len);
+			  	} else {
+
+			  	CS_ACTIVE;
+			  	CD_COMMAND;
+			  	write8(r);
+			  	CD_DATA;
+			  	for (uint8_t d=0; d<len; d++) {
+				  	uint8_t x = pgm_read_byte(&ILI9488_regValues[i++]);
+				  	write8(x);
+			  	}
+			  	CS_IDLE;
+
+		  	}
+		 }
+		 return; 
+		 
   } else {
     driver = ID_UNKNOWN;
     return;
@@ -375,7 +533,7 @@ void Adafruit_TFTLCD::reset(void) {
 // assumed pre-sorted (e.g. x2 >= x1).
 void Adafruit_TFTLCD::setAddrWindow(int x1, int y1, int x2, int y2) {
   CS_ACTIVE;
-  if(driver == ID_932X) {
+  if((driver == ID_932X) || (driver == ID_S6D0154)) {
 
     // Values passed are in current (possibly rotated) coordinate
     // system.  932X requires hardware-native coords regardless of
@@ -419,12 +577,23 @@ void Adafruit_TFTLCD::setAddrWindow(int x1, int y1, int x2, int y2) {
       y  = y2;
       break;
     }
-    writeRegister16(0x0050, x1); // Set address window
+	
+	if(driver == ID_S6D0154) {
+	writeRegister16(0x37, x1); //HorizontalStartAddress
+	writeRegister16(0x36, x2); //HorizontalEndAddress
+	writeRegister16(0x39, y1); //VerticalStartAddress
+	writeRegister16(0x38, y2); //VertocalEndAddress
+	writeRegister16(0x20, x); //GRAM Address Set
+	writeRegister16(0x21, y);
+	writeRegister8(0x22, 0);
+	} else {
+    writeRegister16(0x0050, x1); // Set address window ,Horizontal and Vertical RAM Address Position (R50h, R51h, R52h, R53h)
     writeRegister16(0x0051, x2);
     writeRegister16(0x0052, y1);
     writeRegister16(0x0053, y2);
     writeRegister16(0x0020, x ); // Set address counter to top left
     writeRegister16(0x0021, y );
+	}
 
   } else if(driver == ID_7575) {
 
@@ -433,7 +602,7 @@ void Adafruit_TFTLCD::setAddrWindow(int x1, int y1, int x2, int y2) {
     writeRegisterPair(HX8347G_COLADDREND_HI  , HX8347G_COLADDREND_LO  , x2);
     writeRegisterPair(HX8347G_ROWADDREND_HI  , HX8347G_ROWADDREND_LO  , y2);
 
-  } else if ((driver == ID_9341) || (driver == ID_HX8357D)){
+  } else if ((driver == ID_9341) || (driver == ID_HX8357D) || (driver == ID_ILI9327) || (driver == ID_ILI9488)){ 
     uint32_t t;
 
     t = x1;
@@ -446,6 +615,7 @@ void Adafruit_TFTLCD::setAddrWindow(int x1, int y1, int x2, int y2) {
     writeRegister32(ILI9341_PAGEADDRSET, t); // HX8357D uses same registers!
 
   }
+  
   CS_IDLE;
 }
 
@@ -472,13 +642,15 @@ void Adafruit_TFTLCD::flood(uint16_t color, uint32_t len) {
 
   CS_ACTIVE;
   CD_COMMAND;
-  if (driver == ID_9341) {
+  if ((driver == ID_9341) || (driver == ID_ILI9327) || (driver == ID_ILI9488)) {
     write8(0x2C);
   } else if (driver == ID_932X) {
     write8(0x00); // High byte of GRAM register...
     write8(0x22); // Write data to GRAM
   } else if (driver == ID_HX8357D) {
     write8(HX8357_RAMWR);
+  } else if (driver == ID_S6D0154){
+	write8(0x22);
   } else {
     write8(0x22); // Write data to GRAM
   }
@@ -621,7 +793,7 @@ void Adafruit_TFTLCD::fillScreen(uint16_t color) {
     writeRegister16(0x0020, x);
     writeRegister16(0x0021, y);
 
-  } else if ((driver == ID_9341) || (driver == ID_7575) || (driver == ID_HX8357D)) {
+  } else if ((driver == ID_9341) || (driver == ID_7575) || (driver == ID_HX8357D) || (driver == ID_S6D0154) || (driver == ID_ILI9327) || (driver == ID_ILI9488)) {
     // For these, there is no settable address pointer, instead the
     // address window must be set for each drawing operation.  However,
     // this display takes rotation into account for the parameters, no
@@ -638,7 +810,7 @@ void Adafruit_TFTLCD::drawPixel(int16_t x, int16_t y, uint16_t color) {
   if((x < 0) || (y < 0) || (x >= _width) || (y >= _height)) return;
 
   CS_ACTIVE;
-  if(driver == ID_932X) {
+  if((driver == ID_932X) || (driver == ID_S6D0154)) {
     int16_t t;
     switch(rotation) {
      case 1:
@@ -676,7 +848,7 @@ void Adafruit_TFTLCD::drawPixel(int16_t x, int16_t y, uint16_t color) {
     hi = color >> 8; lo = color;
     CD_COMMAND; write8(0x22); CD_DATA; write8(hi); write8(lo);
 
-  } else if ((driver == ID_9341) || (driver == ID_HX8357D)) {
+  } else if ((driver == ID_9341) || (driver == ID_HX8357D) || (driver == ID_ILI9327) || (driver == ID_ILI9488)) {
     setAddrWindow(x, y, _width-1, _height-1);
     CS_ACTIVE;
     CD_COMMAND; 
@@ -699,8 +871,10 @@ void Adafruit_TFTLCD::pushColors(uint16_t *data, uint8_t len, boolean first) {
   if(first == true) { // Issue GRAM write command only on first call
     CD_COMMAND;
     if(driver == ID_932X) write8(0x00);
-    if ((driver == ID_9341) || (driver == ID_HX8357D)){
+    if ((driver == ID_9341) || (driver == ID_HX8357D) || (driver == ID_ILI9327) || (driver == ID_ILI9488)){
        write8(0x2C);
+     } else if (driver == ID_S6D0154){
+       write8(0x22);
      }  else {
        write8(0x22);
      }
@@ -723,7 +897,7 @@ void Adafruit_TFTLCD::setRotation(uint8_t x) {
   // Then perform hardware-specific rotation operations...
 
   CS_ACTIVE;
-  if(driver == ID_932X) {
+  if((driver == ID_932X) || (driver == ID_S6D0154)){
 
     uint16_t t;
     switch(rotation) {
@@ -753,7 +927,7 @@ void Adafruit_TFTLCD::setRotation(uint8_t x) {
     setLR(); // CS_IDLE happens here
   }
 
- if (driver == ID_9341) { 
+ if ((driver == ID_9341) || (driver == ID_ILI9488) ) { 
    // MEME, HX8357D uses same registers as 9341 but different values
    uint16_t t;
 
@@ -797,7 +971,31 @@ void Adafruit_TFTLCD::setRotation(uint8_t x) {
     writeRegister8(ILI9341_MADCTL, t ); // MADCTL
     // For 8357, init default full-screen address window:
     setAddrWindow(0, 0, _width - 1, _height - 1); // CS_IDLE happens here
-  }}
+  }
+  
+   if (driver ==ID_ILI9327) {
+	   // MEME, HX8357D uses same registers as 9341 but different values
+	   uint16_t t;
+
+	   switch (rotation) {
+		   case 2:
+		   t =  ILI9341_MADCTL_BGR | 0x80;
+		   break;
+		   case 3:
+		   t =  ILI9341_MADCTL_BGR | 0xE0;
+		   break;
+		   case 0:
+		   t =  ILI9341_MADCTL_BGR | 0x02;
+		   break;
+		   case 1:
+		   t =  ILI9341_MADCTL_BGR | 0x20;
+		   break;
+	   }
+	   writeRegister8(ILI9341_MADCTL, t); // MADCTL
+	   // For 9341, init default full-screen address window:
+	   setAddrWindow(0, 0, _width - 1, _height - 1); // CS_IDLE happens here
+   }
+  }
 
 #ifdef read8isFunctionalized
   #define read8(x) x=read8fn()
@@ -812,7 +1010,7 @@ uint16_t Adafruit_TFTLCD::readPixel(int16_t x, int16_t y) {
   if((x < 0) || (y < 0) || (x >= _width) || (y >= _height)) return 0;
 
   CS_ACTIVE;
-  if(driver == ID_932X) {
+  if((driver == ID_932X) || (driver ==ID_S6D0154) || (driver == ID_ILI9327) || (driver == ID_ILI9488)) {
 
     uint8_t hi, lo;
     int16_t t;
@@ -832,13 +1030,22 @@ uint16_t Adafruit_TFTLCD::readPixel(int16_t x, int16_t y) {
       y = TFTHEIGHT - 1 - t;
       break;
     }
+	if (driver == ID_ILI9327){
+		writeRegister16(0x002A, x);
+		writeRegister16(0x002B, y);
+	} else {
     writeRegister16(0x0020, x);
     writeRegister16(0x0021, y);
+	}
     // Inexplicable thing: sometimes pixel read has high/low bytes
     // reversed.  A second read fixes this.  Unsure of reason.  Have
     // tried adjusting timing in read8() etc. to no avail.
     for(uint8_t pass=0; pass<2; pass++) {
+	  if (driver == ID_ILI9327){
+		CD_COMMAND; write8(0x2E); // Read data from GRAM
+	  }else{
       CD_COMMAND; write8(0x00); write8(0x22); // Read data from GRAM
+	  }
       CD_DATA;
       setReadDir();  // Set up LCD data port(s) for READ operations
       read8(hi);     // First 2 bytes back are a dummy read
@@ -872,15 +1079,6 @@ uint16_t Adafruit_TFTLCD::readPixel(int16_t x, int16_t y) {
 
 // Ditto with the read/write port directions, as above.
 uint16_t Adafruit_TFTLCD::readID(void) {
-  uint16_t id;
-
-  // retry a bunch!
-  for (int i = 0; i<5; i++) {
-    id = readReg(0xD3);
-    if (id == 0x9341) {
-      return id;
-    }
-  }
 
   uint8_t hi, lo;
 
@@ -907,6 +1105,20 @@ uint16_t Adafruit_TFTLCD::readID(void) {
       return 0x8357;
     }
   }
+
+  uint16_t id = readReg(0xD3);
+  if (id == 0x9341) {
+    return 0x9341;
+  }
+  if (id == 0x9488) {
+	return 0x9488;
+  }
+  
+  id = readReg(0xEF);
+  if (id == 0x9327) {
+	return 0x9327;
+  }
+  
 
   CS_ACTIVE;
   CD_COMMAND;
@@ -945,11 +1157,17 @@ uint32_t Adafruit_TFTLCD::readReg(uint8_t r) {
   id <<= 8;              // these lines.  It's an unfortunate
   read8(x);
   id  |= x;        // shenanigans that are going on.
+  if (r == 0xEF){
+    id <<= 8;         // these lines.  It's an unfortunate
+	read8(x);
+	id  |= x;	  
+  }
   CS_IDLE;
   setWriteDir();  // Restore LCD data port(s) to WRITE configuration
 
   //Serial.print("Read $"); Serial.print(r, HEX); 
   //Serial.print(":\t0x"); Serial.println(id, HEX);
+  delay(150); //stabilization time
   return id;
 }
 
